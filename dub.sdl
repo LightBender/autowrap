@@ -1,32 +1,36 @@
 name "autowrap"
 description "Wrap existing D code for use in other languages"
-authors "Atila Neves"
+authors "Atila Neves" "Adam Wilson"
 license "BSD"
 targetType "none"
 
-dependency ":reflection" version="*"
-dependency ":python" version="*"
-dependency ":excel" version="*"
 
 subPackage "reflection"
 subPackage "python"
+subPackage "pynih"
 subPackage "excel"
+subPackage "csharp"
 
 
+# The reason it's done like this is because `dub test` fails to even
+# compile in the python subpackage directory because of its dependency
+# on the reflection subpackage.
 configuration "unittest" {
     targetType "executable"
+    targetPath "bin"
     targetName "ut"
-    sourcePaths "python/source"
-    importPaths "python/source"
+    sourcePaths "python/source" "reflection/source" "tests/d_modules"
+    importPaths "python/source" "reflection/source" "tests/d_modules"
     versions "XllDummyGetter"
     dflags "-main"
 }
 
 configuration "unittest-travis" {
     targetType "executable"
+    targetPath "bin"
     targetName "ut"
-    sourcePaths "python/source"
-    importPaths "python/source"
+    sourcePaths "python/source" "reflection/source" "tests/d_modules"
+    importPaths "python/source" "reflection/source" "tests/d_modules"
     versions "XllDummyGetter"
     dflags "-main"
     subConfiguration ":python" "python27"
