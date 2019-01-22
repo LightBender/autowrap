@@ -88,3 +88,4 @@ public immutable struct ParameterDefinition {
     public immutable bool isScope;
     public immutable bool isReturn;
 }
+
