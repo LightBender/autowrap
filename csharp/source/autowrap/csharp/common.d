@@ -2,6 +2,32 @@ module autowrap.csharp.common;
 
 import std.datetime : DateTime, SysTime, Date, TimeOfDay, Duration;
 
+package enum string voidTypeString = "void";
+package enum string stringTypeString = "string";
+package enum string wstringTypeString = "wstring";
+package enum string dstringTypeString = "dstring";
+package enum string boolTypeString = "bool";
+package enum string dateTimeTypeString = "std.datetime.date.DateTime";
+package enum string sysTimeTypeString = "std.datetime.systime.SysTime";
+package enum string dateTypeString = "std.datetime.date.Date";
+package enum string timeOfDayTypeString = "std.datetime.date.TimeOfDay";
+package enum string durationTypeString = "core.time.Duration";
+package enum string uuidTypeString = "UUID";
+package enum string charTypeString = "char";
+package enum string wcharTypeString = "wchar";
+package enum string dcharTypeString = "dchar";
+package enum string ubyteTypeString = "ubyte";
+package enum string byteTypeString = "byte";
+package enum string ushortTypeString = "ushort";
+package enum string shortTypeString = "short";
+package enum string uintTypeString = "uint";
+package enum string intTypeString = "int";
+package enum string ulongTypeString = "ulong";
+package enum string longTypeString = "long";
+package enum string floatTypeString = "float";
+package enum string doubleTypeString = "double";
+package enum string sliceTypeString = "slice";
+
 public enum isDateTimeType(T) = is(T == Date) || is(T == DateTime) || is(T == SysTime) || is(T == TimeOfDay) || is(T == Duration);
 public enum isDateTimeArrayType(T) = is(T == Date[]) || is(T == DateTime[]) || is(T == SysTime[]) || is(T == TimeOfDay[]) || is(T == Duration[]);
 
@@ -105,7 +131,7 @@ package struct WrapParameter {
     public string csharpInterfaceType;
     public string dlangInterfaceType;
 
-    public this(string name, string string csharpType, csharpInterfaceType, string dlangInterfaceType) {
+    public this(string name, string csharpType, string csharpInterfaceType, string dlangInterfaceType) {
         this.name = name;
         this.csharpType = csharpType;
         this.csharpInterfaceType = csharpInterfaceType;
@@ -236,7 +262,15 @@ if (is(T == class) || is(T == interface) || is(T == struct)){
     }
 }
 
-private string getCSharpInterfaceType(string type) {
+package string getCSharpName(string dlangName) {
+    import autowrap.csharp.common : camelToPascalCase;
+    import std.algorithm : map;
+    import std.string : split;
+    import std.array : join;
+    return dlangName.split(".").map!camelToPascalCase.join(".");
+}
+
+package string getCSharpInterfaceType(string type) {
     if (type[$-2..$] == "[]") return "slice";
 
     switch(type) {
@@ -270,7 +304,7 @@ private string getCSharpInterfaceType(string type) {
     }
 }
 
-private string getCSharpType(string type) {
+package string getCSharpType(string type) {
     if (type[$-2..$] == "[]") type = type[0..$-2];
 
     switch (type) {

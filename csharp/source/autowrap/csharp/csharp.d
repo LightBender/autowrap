@@ -13,32 +13,6 @@ private string[string] returnTypes;
 private CSharpNamespace[string] namespaces;
 private csharpRange rangeDef;
 
-enum string voidTypeString = "void";
-enum string stringTypeString = "string";
-enum string wstringTypeString = "wstring";
-enum string dstringTypeString = "dstring";
-enum string boolTypeString = "bool";
-enum string dateTimeTypeString = "std.datetime.date.DateTime";
-enum string sysTimeTypeString = "std.datetime.systime.SysTime";
-enum string dateTypeString = "std.datetime.date.Date";
-enum string timeOfDayTypeString = "std.datetime.date.TimeOfDay";
-enum string durationTypeString = "core.time.Duration";
-enum string uuidTypeString = "UUID";
-enum string charTypeString = "char";
-enum string wcharTypeString = "wchar";
-enum string dcharTypeString = "dchar";
-enum string ubyteTypeString = "ubyte";
-enum string byteTypeString = "byte";
-enum string ushortTypeString = "ushort";
-enum string shortTypeString = "short";
-enum string uintTypeString = "uint";
-enum string intTypeString = "int";
-enum string ulongTypeString = "ulong";
-enum string longTypeString = "long";
-enum string floatTypeString = "float";
-enum string doubleTypeString = "double";
-enum string sliceTypeString = "slice";
-
 enum string dllImportString = "        [DllImport(\"%1$s\", EntryPoint = \"%2$s\", CallingConvention = CallingConvention.Cdecl)]" ~ newline;
 enum string externFuncString = "        internal static extern %1$s %2$s(%3$s);" ~ newline;
 
@@ -170,7 +144,7 @@ public string generateCSharp(Modules...)(LibraryName libraryName, RootNamespace 
 }
 
 private void generateConstructors(T)(string libraryName) if (is(T == class) || is(T == struct)) {
-    import autowrap.csharp.common : getDLangInterfaceName;
+    import autowrap.csharp.common : getDLangInterfaceName, getCSharpName, getCSharpType;
     import std.traits : moduleName, fullyQualifiedName, hasMember, Parameters, ParameterIdentifierTuple;
     import std.meta: AliasSeq;
     import std.algorithm : among;
@@ -238,7 +212,7 @@ private void generateConstructors(T)(string libraryName) if (is(T == class) || i
 }
 
 private void generateMethods(T)(string libraryName) if (is(T == class) || is(T == interface) || is(T == struct)) {
-    import autowrap.csharp.common : camelToPascalCase, getDLangInterfaceName;
+    import autowrap.csharp.common : camelToPascalCase, getDLangInterfaceName, getCSharpName, getCSharpType;
     import std.traits : moduleName, isArray, fullyQualifiedName, isFunction, functionAttributes, FunctionAttribute, ReturnType, Parameters, ParameterIdentifierTuple;
     import std.conv : to;
 
@@ -336,7 +310,7 @@ private void generateMethods(T)(string libraryName) if (is(T == class) || is(T =
 }
 
 private void generateProperties(T)(string libraryName) if (is(T == class) || is(T == interface) || is(T == struct)) {
-    import autowrap.csharp.common : camelToPascalCase;
+    import autowrap.csharp.common : camelToPascalCase, getCSharpName, getCSharpType;
     import std.traits : moduleName, isArray, fullyQualifiedName, functionAttributes, FunctionAttribute, ReturnType, Parameters;
 
     alias fqn = fullyQualifiedName!T;
@@ -428,7 +402,7 @@ private void generateProperties(T)(string libraryName) if (is(T == class) || is(
 }
 
 private void generateFields(T)(string libraryName) if (is(T == class) || is(T == interface) || is(T == struct)) {
-    import autowrap.csharp.common : getDLangInterfaceName;
+    import autowrap.csharp.common : getDLangInterfaceName, getCSharpName, getCSharpType;
     import std.traits : moduleName, isArray, fullyQualifiedName, Fields, FieldNameTuple;
 
     alias fqn = fullyQualifiedName!T;
@@ -509,7 +483,7 @@ private void generateFields(T)(string libraryName) if (is(T == class) || is(T ==
 }
 
 private void generateFunctions(Modules...)(string libraryName) if(allSatisfy!(isModule, Modules)) {
-    import autowrap.csharp.common : getDLangInterfaceName;
+    import autowrap.csharp.common : getDLangInterfaceName, getCSharpName, getCSharpType;
     import autowrap.reflection: AllFunctions;
     import std.traits : isArray, fullyQualifiedName, ReturnType, Parameters, ParameterIdentifierTuple;
 
@@ -599,6 +573,7 @@ private void generateFunctions(Modules...)(string libraryName) if(allSatisfy!(is
 }
 
 private string getDLangReturnType(string type, bool isClass) {
+    import autowrap.csharp.common;
     import std.algorithm : among;
 
     string rtname = getReturnErrorTypeName(getCSharpInterfaceType(type));
@@ -656,14 +631,6 @@ private string getReturnErrorTypeName(string aggName) {
     return mixin(interp!"return_${aggName.split(\".\").join(\"_\")}_error");
 }
 
-private string getCSharpName(string dlangName) {
-    import autowrap.csharp.common : camelToPascalCase;
-    import std.algorithm : map;
-    import std.string : split;
-    import std.array : join;
-    return dlangName.split(".").map!camelToPascalCase.join(".");
-}
-
 private CSharpNamespace getNamespace(string name) {
     return namespaces.require(name, new CSharpNamespace(name));
 }
@@ -674,7 +641,7 @@ private CSharpAggregate getAggregate(string namespace, string name, bool isStruc
 }
 
 private void generateRangeDef(T)(string libraryName) {
-    import autowrap.csharp.common : getDLangSliceInterfaceName;
+    import autowrap.csharp.common : getDLangSliceInterfaceName, getCSharpType, getCSharpName;
     import std.traits : fullyQualifiedName;
 
     alias fqn = fullyQualifiedName!T;
