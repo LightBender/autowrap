@@ -14,8 +14,4 @@ mixin(
     )
 );
 
-<<<<<<< HEAD
-//pragma(msg, wrapDLang!(Module("test"))); //Uncomment this to see the generated interface code.
-=======
 //pragma(msg, wrapDLang!(Module("test"))); //Uncomment this to see generated D interface code.
->>>>>>> datetime
