@@ -13,3 +13,5 @@ mixin(
         RootNamespace("Autowrap.CSharp.Tests")
     )
 );
+
+//pragma(msg, wrapDLang!(Module("test"))); //Uncomment this to see the generated interface code.

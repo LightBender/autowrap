@@ -1,6 +1,7 @@
 module autowrap.csharp.common;
 
-import std.datetime : DateTime, SysTime, Date, TimeOfDay, Duration;
+public import std.datetime : DateTime, SysTime, Date, TimeOfDay, Duration, TimeZone;
+public import std.traits : Unqual;
 
 package enum string voidTypeString = "void";
 package enum string stringTypeString = "string";
@@ -28,8 +29,8 @@ package enum string floatTypeString = "float";
 package enum string doubleTypeString = "double";
 package enum string sliceTypeString = "slice";
 
-public enum isDateTimeType(T) = is(T == Date) || is(T == DateTime) || is(T == SysTime) || is(T == TimeOfDay) || is(T == Duration);
-public enum isDateTimeArrayType(T) = is(T == Date[]) || is(T == DateTime[]) || is(T == SysTime[]) || is(T == TimeOfDay[]) || is(T == Duration[]);
+public enum isDateTimeType(T) = is(T == Unqual!Date) || is(T == Unqual!DateTime) || is(T == Unqual!SysTime) || is(T == Unqual!TimeOfDay) || is(T == Unqual!Duration) || is(T == Unqual!TimeZone);
+public enum isDateTimeArrayType(T) = is(T == Unqual!(Date[])) || is(T == Unqual!(DateTime[])) || is(T == Unqual!(SysTime[])) || is(T == Unqual!(TimeOfDay[])) || is(T == Unqual!(Duration[])) || is(T == Unqual!(TimeZone[]));
 
 enum string[] excludedMethods = ["toHash", "opEquals", "opCmp", "factory", "__ctor"];
 
@@ -41,40 +42,8 @@ public struct RootNamespace {
     string value;
 }
 
-public string generateSharedTypes() {
-    return q{
-        extern(C) export struct datetime {
-            long ticks;
-            long offset;
-
-            public this(Duration value) {
-                this.ticks = value.total!"hnsecs";
-                this.offset = 0;
-            }
-
-            public this(DateTime value) {
-                this.ticks = SysTime(value).stdTime;
-                this.offset = 0;
-            }
-
-            public this(Date value) {
-                this.ticks = SysTime(value).stdTime;
-                this.offset = 0;
-            }
-
-            public this(TimeOfDay value) {
-                import core.time : Duration, hours, minutes, seconds;
-                Duration t = hours(value.hour) + minutes(value.minute) + seconds(value.second);
-                this.ticks = t.total!"hnsecs";
-                this.offset = 0;
-            }
-
-            public this(SysTime value) {
-                this.ticks = value.stdTime;
-                this.offset = value.utcOffset.total!"hnsecs";
-            }
-        }
-    };
+public struct OutputFileName {
+    string value;
 }
 
 package struct WrapAggregate {
@@ -341,9 +310,9 @@ package string getCSharpType(string type) {
 package string getDLangInterfaceType(T)() {
     import std.traits : fullyQualifiedName;
     import std.datetime : DateTime, SysTime, Date, TimeOfDay, Duration;
-    if (is(T == Date) || is(T == DateTime) || is(T == SysTime) || is(T == TimeOfDay) || is(T == Duration)) {
+    if (isDateTimeType!T) {
         return "datetime";
-    } else if (is(T == Date[]) || is(T == DateTime[]) || is(T == SysTime[]) || is(T == TimeOfDay[]) || is(T == Duration[])) {
+    } else if (isDateTimeArrayType!T) {
         return "datetime[]";
     } else {
         return fullyQualifiedName!T;
@@ -384,7 +353,7 @@ package string getDLangSliceInterfaceName(string fqn, string funcName) {
     string name = "autowrap_csharp_slice_";
 
     if (fqn.among("core.time.Duration", "std.datetime.systime.SysTime", "std.datetime.date.DateTime", "autowrap.csharp.dlang.datetime")) {
-        fqn = "datetime";
+        fqn = "Autowrap_Csharp_Boilerplate_Datetime";
     }
 
     name ~= fqn.split(".").map!camelToPascalCase.join("_");
