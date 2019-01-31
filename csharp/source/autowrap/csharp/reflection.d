@@ -2,7 +2,6 @@ module autowrap.csharp.reflection;
 
 import std.algorithm : among;
 public import std.meta : Unqual;
-public import std.traits : isModule;
 
 public ModuleDefinition testModule = reflectModule!"autowrap.csharp.reflection";
 public StructDefinition testStruct = reflectStruct!StructDefinition;
@@ -238,12 +237,12 @@ public ModuleDefinition reflectModule(string module_)() {
     EnumDefinition[] enumerations;
     StructDefinition[] structs;
 
-    foreach(m; members) {
-        if(isFunction!m) {
+    static foreach(m; members) {
+        static if(isFunction!m) {
             functions ~= reflectFunction!m;
-        } else if (is(m == enum)) {
+        } else static if (is(m == enum)) {
             enumerations ~= reflectEnum!m;
-        } else if (is(m == struct)) {
+        } else static if (is(m == struct)) {
             structs ~= reflectStruct!m;
         }
     }
