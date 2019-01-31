@@ -3,7 +3,8 @@ module autowrap.csharp.reflection;
 import std.algorithm : among;
 public import std.meta : Unqual;
 
-public StructDefinition test = reflectStruct!StructDefinition;
+public StructDefinition testStruct = reflectStruct!StructDefinition;
+public EnumDefinition testEnum = reflectEnum!Protection;
 
 public enum Protection {
     Export,
@@ -18,9 +19,38 @@ public immutable struct ModuleDefinition {
     public immutable string fqn;
 
     public immutable FunctionDefinition[] functions;
+    public immutable EnumDefinition[] enumerations;
     public immutable StructDefinition[] structs;
     public immutable InterfaceDefinition[] interfaces;
     public immutable ClassDefinition[] classes;
+}
+
+public immutable struct EnumDefinition {
+    public immutable string fqn;
+    public immutable string name;
+    public immutable TypeInfo_Enum type;
+    public immutable TypeInfo baseType;
+    public immutable Protection protection;
+    public immutable EnumValue[] values;
+
+    private this(const string fqn, const string name, const TypeInfo_Enum type, const TypeInfo baseType, const Protection protection, immutable(EnumValue)[] values) {
+        this.fqn = fqn;
+        this.name = name;
+        this.type = cast(immutable)type;
+        this.baseType = cast(immutable)baseType;
+        this.protection = protection;
+        this.values = cast(immutable)values;
+    }
+}
+
+public immutable struct EnumValue {
+    public immutable string name;
+    public immutable string value;
+
+    private this(const string name, const string value) {
+        this.name = name;
+        this.value = value;
+    }
 }
 
 public immutable struct FunctionDefinition {
@@ -45,7 +75,7 @@ public immutable struct FunctionDefinition {
     public immutable bool isTrusted;
     public immutable bool isSystem;
 
-    public this(const string fqn, const string name, immutable(ParameterDefinition)[] parameters, const TypeInfo returnType, const bool isRef, const bool isShared, const bool isConst, const bool isImmutable, const bool isInout, const Protection protection, const bool isProperty, const bool isNothrow, const bool isPure, const bool isNogc, const bool isSafe, const bool isTrusted, const bool isSystem) {
+    private this(const string fqn, const string name, immutable(ParameterDefinition)[] parameters, const TypeInfo returnType, const bool isRef, const bool isShared, const bool isConst, const bool isImmutable, const bool isInout, const Protection protection, const bool isProperty, const bool isNothrow, const bool isPure, const bool isNogc, const bool isSafe, const bool isTrusted, const bool isSystem) {
         this.name = cast(immutable)name;
         this.fqn = cast(immutable)fqn;
         this.parameters = cast(immutable)parameters;
@@ -171,7 +201,7 @@ public immutable struct FieldDefinition {
     public immutable size_t size;
     public immutable size_t offset;
 
-    public immutable this(string name, TypeInfo type, Protection protection, bool isShared, bool isConst, bool isImmutable, size_t size, size_t offset) {
+    private immutable this(string name, TypeInfo type, Protection protection, bool isShared, bool isConst, bool isImmutable, size_t size, size_t offset) {
         this.name = cast(immutable)name;
         this.type = cast(immutable)type;
         this.protection = cast(immutable)protection;
@@ -181,6 +211,26 @@ public immutable struct FieldDefinition {
         this.size = cast(immutable)size;
         this.offset = cast(immutable)offset;
     }
+}
+
+public EnumDefinition reflectEnum(T)() if(is(Unqual!T == enum)) {
+    import std.traits : fullyQualifiedName, OriginalType, EnumMembers;
+    import std.conv : to;
+
+    const string fqn = fullyQualifiedName!T;
+    const string name = __traits(identifier, T);
+    const TypeInfo_Enum type = typeid(Unqual!T);
+    const TypeInfo baseType = typeid(OriginalType!T);
+    const Protection protection = getProtection(__traits(getProtection, T));
+
+    alias memberNames = EnumMembers!T;
+    auto memberValues = cast(OriginalType!T[])[EnumMembers!T];
+    EnumValue[] values;
+    foreach(ec, em; memberNames) {
+        values ~= EnumValue(__traits(identifier, em), to!string(memberValues[ec]));
+    }
+
+    return EnumDefinition(fqn, name, type, baseType, protection, values);
 }
 
 public StructDefinition reflectStruct(T)() if(is(Unqual!T == struct)) {
