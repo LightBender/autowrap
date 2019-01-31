@@ -2,7 +2,9 @@ module autowrap.csharp.reflection;
 
 import std.algorithm : among;
 public import std.meta : Unqual;
+public import std.traits : isModule;
 
+public ModuleDefinition testModule = reflectModule!"autowrap.csharp.reflection";
 public StructDefinition testStruct = reflectStruct!StructDefinition;
 public EnumDefinition testEnum = reflectEnum!Protection;
 
@@ -23,6 +25,17 @@ public immutable struct ModuleDefinition {
     public immutable StructDefinition[] structs;
     public immutable InterfaceDefinition[] interfaces;
     public immutable ClassDefinition[] classes;
+
+    private this(const string fqn, const string name, immutable(FunctionDefinition)[] functions, immutable(EnumDefinition)[] enumerations, immutable(StructDefinition)[] structs, immutable(InterfaceDefinition)[] interfaces, immutable(ClassDefinition)[] classes) {
+        this.fqn = fqn;
+        this.name = name;
+
+        this.functions = cast(immutable)functions;
+        this.enumerations = cast(immutable)enumerations;
+        this.structs = cast(immutable)structs;
+        this.interfaces = cast(immutable)interfaces;
+        this.classes = cast(immutable)classes;
+    }
 }
 
 public immutable struct EnumDefinition {
@@ -211,6 +224,31 @@ public immutable struct FieldDefinition {
         this.size = cast(immutable)size;
         this.offset = cast(immutable)offset;
     }
+}
+
+public ModuleDefinition reflectModule(string module_)() {
+    import std.traits : fullyQualifiedName, isFunction;
+
+    mixin(`import dmodule = ` ~ module_ ~ `;`);
+    alias members = __traits(allMembers, dmodule);
+    const string fqn = fullyQualifiedName!dmodule;
+    const string name = __traits(identifier, dmodule);
+
+    FunctionDefinition[] functions;
+    EnumDefinition[] enumerations;
+    StructDefinition[] structs;
+
+    foreach(m; members) {
+        if(isFunction!m) {
+            functions ~= reflectFunction!m;
+        } else if (is(m == enum)) {
+            enumerations ~= reflectEnum!m;
+        } else if (is(m == struct)) {
+            structs ~= reflectStruct!m;
+        }
+    }
+
+    return ModuleDefinition(fqn, name, functions, enumerations, structs, null, null);
 }
 
 public EnumDefinition reflectEnum(T)() if(is(Unqual!T == enum)) {
