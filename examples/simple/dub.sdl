@@ -1,19 +1,73 @@
 name "simple"
-targetType "dynamicLibrary"
-dependency "autowrap:python" path="../../python"
 
+configuration "csharp-buildlib" {
+    targetType "dynamicLibrary"
+    dependency "autowrap:csharp" path="../../"
+    versions "WrapCSharp"
+}
+
+configuration "csharp-emit" {
+    targetType "executable"
+    versions "EmitCSharp" "WrapCSharp"
+}
+
+configuration "excel" {
+  preBuildCommands "dub run -c excel-def --nodeps -q -- simple.def"
+  sourceFiles "simple.def"
+  libs "xlcall32"
+  postBuildCommands "copy /y simple.dll simple.xll"
+  versions "WrapExcel"
+  dependency "excel-d" version="~master"
+}
+
+configuration "excel-def" {
+  targetType "executable"
+  targetName "simple"
+  versions "excelDef" "WrapExcel"
+  dependency "excel-d" version="~master"
+}
+
+configuration "excel-xll" {
+  sourceFiles "simple.def"
+  libs "xlcall32"
+  postBuildCommands "copy /y myxll.dll myxll.xll"
+  versions "WrapExcel"
+  dependency "excel-d" version="~master"
+}
+	
 configuration "python37" {
-     subConfiguration "autowrap:python" "python37"
+    dependency "autowrap:python" path="../../"
+    subConfiguration "autowrap:python" "python37"
+    targetType "dynamicLibrary"
+    versions "WrapPython"
 }
 
 configuration "python36" {
-     subConfiguration "autowrap:python" "python36"
+    dependency "autowrap:python" path="../../"
+    subConfiguration "autowrap:python" "python36"
+    targetType "dynamicLibrary"
+    versions "WrapPython"
 }
 
 configuration "python33" {
-     subConfiguration "autowrap:python" "python33"
+    dependency "autowrap:python" path="../../"
+    subConfiguration "autowrap:python" "python33"
+    targetType "dynamicLibrary"
+    versions "WrapPython"
 }
 
 configuration "python27" {
-     subConfiguration "autowrap:python" "python27"
+    dependency "autowrap:python" path="../../"
+    subConfiguration "autowrap:python" "python27"
+    targetType "dynamicLibrary"
+    versions "WrapPython"
 }
+
+configuration "env" {
+    dependency "autowrap:python" path="../../"
+    subConfiguration "autowrap:python" "env"
+    targetType "dynamicLibrary"
+    versions "WrapPython"
+}
+
+
